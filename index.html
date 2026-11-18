@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Fisika SMA - Gerak Lurus (GLB, GLBB, Vertikal)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        @keyframes pulseDanger {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+        }
+        .danger-pulse {
+            animation: pulseDanger 2s infinite;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-200">
+
+    <!-- ==================== SCREEN 1: BLACKLIST LOCKOUT SCREEN ==================== -->
+    <div id="blacklist-screen" class="hidden fixed inset-0 z-50 bg-red-950 text-white flex flex-col items-center justify-center p-4 overflow-y-auto">
+        <div class="max-w-lg w-full bg-red-900/90 border-2 border-red-500 rounded-2xl p-6 sm:p-8 text-center shadow-2xl danger-pulse">
+            <div class="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <i class="fa-solid fa-ban text-4xl text-white"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">AKSES DIBLOKIR (AUTO-BLACKLIST)</h1>
+            <p class="text-red-200 text-sm sm:text-base mb-6">
+                Sistem keamanan ujian mendeteksi aktivitas kecurangan atau pelanggaran aturan ujian pada perangkat/browser ini.
+            </p>
+            
+            <div class="bg-red-950/80 border border-red-700 rounded-xl p-4 text-left text-xs sm:text-sm space-y-2 mb-6 font-mono">
+                <div class="flex justify-between border-b border-red-800/60 pb-1">
+                    <span class="text-red-400">Nama Siswa:</span>
+                    <span id="bl-nama" class="font-bold text-white">-</span>
+                </div>
+                <div class="flex justify-between border-b border-red-800/60 pb-1">
+                    <span class="text-red-400">Kelas / Absen:</span>
+                    <span id="bl-kelas" class="font-bold text-white">-</span>
+                </div>
+                <div class="flex justify-between border-b border-red-800/60 pb-1">
+                    <span class="text-red-400">Jenis Pelanggaran:</span>
+                    <span id="bl-reason" class="font-bold text-yellow-300 text-right">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-red-400">Waktu Kejadian:</span>
+                    <span id="bl-time" class="font-bold text-white">-</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-red-300 mb-6">
+                Ujian Anda telah dihentikan secara otomatis dan status perangkat dikunci permanen. Silakan lapor kepada Guru Pengampu: <strong>Fetriana Simanihuruk, S.Pd.</strong>
+            </p>
+
+            <div class="pt-4 border-t border-red-800/60 flex justify-center">
+                <button onclick="openTeacherModal()" class="text-xs text-red-300 hover:text-white underline flex items-center gap-1.5 py-2 px-3 rounded-lg hover:bg-red-800/50 transition">
+                    <i class="fa-solid fa-key"></i> Buka Kunci (Khusus Guru)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL PIN GURU ==================== -->
+    <div id="teacher-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white text-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-blue-600"></i> Otorisasi Guru Pengampu
+                </h3>
+                <button onclick="closeTeacherModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-600 mb-4">
+                Masukkan PIN Guru untuk menghapus status blacklist pada perangkat ini dan mereset sesi ujian.
+            </p>
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">PIN Keamanan Guru</label>
+                <input type="password" id="teacher-pin-input" maxlength="6" placeholder="Masukkan 6 digit PIN" 
+                    class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-center font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-600">
+                <p id="pin-error-msg" class="hidden text-xs text-red-600 mt-1.5 font-medium">
+                    <i class="fa-solid fa-circle-exclamation"></i> PIN salah! Akses ditolak.
+                </p>
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeTeacherModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">Batal</button>
+                <button onclick="verifyTeacherPin()" class="px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow transition">Buka Blokir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN 2: LOGIN & TATA TERTIB ==================== -->
+    <div id="login-screen" class="flex-1 flex flex-col justify-center items-center p-4 sm:p-6">
+        <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 sm:p-8">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <span class="inline-flex items-center gap-1.5 bg-blue-700/70 border border-blue-400/30 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full">
+                        <i class="fa-solid fa-school"></i> SMA St. Thomas 1 Medan
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-semibold px-3 py-1 rounded-full">
+                        <i class="fa-solid fa-shield-halved"></i> CBT Anti-Cheat Aktif
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">Ujian Fisika SMA: Gerak Lurus</h1>
+                <p class="text-blue-200 text-sm sm:text-base font-medium">GLB, GLBB, dan Gerak Lurus Vertikal (10 Soal MOTS + 10 Soal HOTS)</p>
+                <div class="mt-4 pt-4 border-t border-blue-700/60 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-blue-100">
+                    <div><i class="fa-solid fa-chalkboard-user mr-1.5 text-blue-300"></i> Guru Pengampu: <strong>Fetriana Simanihuruk, S.Pd.</strong></div>
+                    <div><i class="fa-regular fa-clock mr-1.5 text-blue-300"></i> Durasi: <strong>45 Menit</strong> (20 Soal)</div>
+                </div>
+            </div>
+
+            <div class="p-6 sm:p-8">
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mb-6">
+                    <h3 class="text-sm font-bold text-amber-900 flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> PERATURAN KETAT & SISTEM AUTO-BLACKLIST
+                    </h3>
+                    <ul class="text-xs text-amber-800 space-y-1 list-disc list-inside leading-relaxed">
+                        <li>Ujian wajib dijalankan dalam mode <strong>Layar Penuh (Fullscreen)</strong>.</li>
+                        <li><strong>DILARANG KERAS</strong> berpindah tab, meminimalkan browser, membuka aplikasi lain, atau keluar dari mode Fullscreen.</li>
+                        <li><strong>DILARANG</strong> klik kanan, menyalin (copy/paste), mengambil tangkapan layar, atau menekan tombol pintasan (F12, Alt+Tab, Ctrl+C, dll).</li>
+                        <li>Pelanggaran sekecil apa pun akan memicu <strong>AUTO-BLACKLIST PERMANEN</strong> pada perangkat Anda secara otomatis!</li>
+                    </ul>
+                </div>
+
+                <form id="login-form" onsubmit="handleStartExam(event)" class="space-y-4">
+                    <div>
+                        <label for="student-name" class="block text-sm font-semibold text-slate-700 mb-1">Nama Lengkap Siswa <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                            <input type="text" id="student-name" required placeholder="Contoh: Yohanes Sinaga" 
+                                class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="student-class" class="block text-sm font-semibold text-slate-700 mb-1">Kelas <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                    <i class="fa-solid fa-users-rectangle"></i>
+                                </span>
+                                <input type="text" id="student-class" required placeholder="Contoh: X MIPA 1" 
+                                    class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="student-absen" class="block text-sm font-semibold text-slate-700 mb-1">Nomor Absen <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                    <i class="fa-solid fa-hashtag"></i>
+                                </span>
+                                <input type="number" id="student-absen" required min="1" max="50" placeholder="Contoh: 14" 
+                                    class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="agree-rules" required class="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span class="text-xs text-slate-600 leading-relaxed">
+                                Saya berjanji mengerjakan ujian ini dengan jujur dan siap menerima sanksi <strong>Auto-Blacklist</strong> apabila terdeteksi keluar dari layar ujian atau melakukan kecurangan.
+                            </span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 px-6 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold rounded-xl shadow-lg shadow-blue-700/30 transition flex items-center justify-center gap-2 text-base mt-2">
+                        <i class="fa-solid fa-expand"></i> Masuk Mode Layar Penuh & Mulai Ujian
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN 3: INTERFACE UJIAN CBT ==================== -->
+    <div id="exam-screen" class="hidden flex-1 flex flex-col">
+        <header class="sticky top-0 z-30 bg-blue-900 text-white shadow-md border-b border-blue-800">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-800 border border-blue-600 flex items-center justify-center font-bold text-lg text-blue-200">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-sm sm:text-base leading-tight">Fisika SMA: Gerak Lurus (GLB, GLBB, Vertikal)</h2>
+                        <p class="text-xs text-blue-200" id="header-student-info">Siswa - Kelas</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="hidden md:flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-medium">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span>Anti-Cheat Terkunci</span>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-700 px-3.5 py-1.5 rounded-xl flex items-center gap-2 shadow-inner">
+                        <i class="fa-regular fa-clock text-amber-400"></i>
+                        <span id="timer-display" class="font-mono font-bold text-base sm:text-lg text-white tracking-wider">45:00</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="bg-blue-700 text-white font-bold text-sm px-3 py-1 rounded-lg">
+                            Soal No. <span id="current-q-num">1</span> <span class="text-blue-200 font-normal">/ 20</span>
+                        </span>
+                        <span id="q-level-badge" class="text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide">
+                            MOTS
+                        </span>
+                    </div>
+                    <span class="text-xs text-slate-500 font-medium">
+                        Gunakan percepatan gravitasi <span class="font-semibold text-slate-700">g = 10 m/s<sup>2</sup></span> (kecuali disebutkan lain)
+                    </span>
+                </div>
+
+                <div class="p-5 sm:p-7">
+                    <div id="question-text" class="text-slate-800 text-base sm:text-lg leading-relaxed font-medium mb-6"></div>
+                    <div id="options-container" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-slate-50 px-5 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 mt-auto">
+                    <button id="btn-prev" onclick="prevQuestion()" class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-semibold text-sm rounded-xl transition flex items-center gap-2">
+                        <i class="fa-solid fa-chevron-left"></i> Sebelumnya
+                    </button>
+
+                    <button id="btn-doubt" onclick="toggleDoubt()" class="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 font-semibold text-sm rounded-xl transition flex items-center gap-2">
+                        <i class="fa-regular fa-flag"></i> <span id="doubt-btn-text">Ragu-ragu</span>
+                    </button>
+
+                    <button id="btn-next" onclick="nextQuestion()" class="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm rounded-xl shadow transition flex items-center gap-2">
+                        Selanjutnya <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sticky top-20">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-grip text-blue-600"></i> Navigasi Soal
+                    </h3>
+                    <span class="text-xs font-semibold text-slate-500">
+                        Terjawab: <span id="answered-count" class="text-blue-700 font-bold">0</span>/20
+                    </span>
+                </div>
+
+                <div id="nav-grid" class="grid grid-cols-5 gap-2 mb-5"></div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 mb-5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3.5 h-3.5 rounded bg-blue-600 inline-block"></span> Sudah Dijawab
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3.5 h-3.5 rounded bg-amber-400 inline-block"></span> Ragu-ragu
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3.5 h-3.5 rounded bg-white border border-slate-300 inline-block"></span> Belum Dijawab
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3.5 h-3.5 rounded ring-2 ring-blue-700 bg-blue-50 inline-block"></span> Posisi Aktif
+                    </div>
+                </div>
+
+                <button onclick="openSubmitModal()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Selesai & Kumpulkan Ujian
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== MODAL KONFIRMASI SELESAI UJIAN ==================== -->
+    <div id="submit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-check-double"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Konfirmasi Pengumpulan Ujian</h3>
+            <p id="submit-summary-text" class="text-sm text-slate-600 mb-6 leading-relaxed">
+                Apakah Anda yakin ingin mengakhiri ujian sekarang? Jawaban yang sudah dikumpulkan tidak dapat diubah lagi.
+            </p>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeSubmitModal()" class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                    Periksa Kembali
+                </button>
+                <button onclick="finishExam(false)" class="px-5 py-2.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow transition">
+                    Ya, Kumpulkan Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN 4: HASIL & PEMBAHASAN ==================== -->
+    <div id="result-screen" class="hidden flex-1 py-8 px-4 sm:px-6">
+        <div class="max-w-4xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div>
+                        <span class="inline-block bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold px-3 py-1 rounded-full mb-2">
+                            <i class="fa-solid fa-circle-check mr-1"></i> UJIAN SELESAI & TERVERIFIKASI
+                        </span>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold mb-1" id="res-name">Nama Siswa</h1>
+                        <p class="text-blue-200 text-sm" id="res-class">Kelas X MIPA | Absen 01</p>
+                        <p class="text-xs text-blue-300 mt-2">Guru Pengampu: Fetriana Simanihuruk, S.Pd. (SMA St. Thomas 1 Medan)</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 text-center min-w-[160px]">
+                        <div class="text-xs uppercase tracking-wider text-blue-200 font-semibold mb-1">Nilai Akhir</div>
+                        <div id="res-score" class="text-5xl font-black text-white">0</div>
+                        <div id="res-predicate" class="text-xs font-bold mt-1 px-2.5 py-0.5 rounded-full bg-blue-500/30 text-blue-100 inline-block">
+                            Predikat
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 border-b border-slate-200">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 text-center">
+                        <div class="text-xs text-slate-500 font-medium mb-1">Jawaban Benar</div>
+                        <div id="res-correct" class="text-2xl font-extrabold text-emerald-600">0 / 20</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 text-center">
+                        <div class="text-xs text-slate-500 font-medium mb-1">Jawaban Salah</div>
+                        <div id="res-wrong" class="text-2xl font-extrabold text-rose-600">0 / 20</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 text-center">
+                        <div class="text-xs text-slate-500 font-medium mb-1">Akurasi MOTS (10 Soal)</div>
+                        <div id="res-mots" class="text-2xl font-extrabold text-blue-600">0%</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 text-center">
+                        <div class="text-xs text-slate-500 font-medium mb-1">Akurasi HOTS (10 Soal)</div>
+                        <div id="res-hots" class="text-2xl font-extrabold text-purple-600">0%</div>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:px-6 bg-white flex flex-wrap items-center justify-between gap-3">
+                    <p class="text-xs text-slate-500">
+                        <i class="fa-solid fa-info-circle text-blue-600 mr-1"></i> Berikut adalah rincian jawaban Anda beserta kunci jawaban dan pembahasan lengkap.
+                    </p>
+                    <button onclick="location.reload()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Kembali ke Halaman Awal
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-4" id="review-container"></div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        const STORAGE_BLACKLIST_KEY = 'cbt_fisika_geraklurus_blacklist_v1';
+        const TEACHER_PIN = '123456';
+        const EXAM_DURATION_SECONDS = 45 * 60;
+
+        const QUESTION_BANK = [
+            // ==================== 10 SOAL MOTS ====================
+            {
+                id: 'MOTS-01',
+                level: 'MOTS',
+                question: 'Sebuah mobil bergerak dengan kecepatan awal 10 m/s mengalami percepatan tetap sebesar 2 m/s<sup>2</sup> selama 5 sekon. Jarak total yang ditempuh mobil tersebut selama waktu tersebut adalah ....',
+                options: [
+                    '75 meter',
+                    '50 meter',
+                    '100 meter',
+                    '60 meter',
+                    '125 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Gunakan persamaan GLBB: <i>S</i> = <i>v</i><sub>0</sub><i>t</i> + &frac12;<i>at</i><sup>2</sup> = 10(5) + &frac12;(2)(5<sup>2</sup>) = 50 + 25 = 75 meter.'
+            },
+            {
+                id: 'MOTS-02',
+                level: 'MOTS',
+                question: 'Sebuah benda jatuh bebas dari ketinggian 45 meter di atas tanah (percepatan gravitasi <i>g</i> = 10 m/s<sup>2</sup>). Waktu yang diperlukan benda tersebut hingga tepat menyentuh tanah adalah ....',
+                options: [
+                    '3 sekon',
+                    '2 sekon',
+                    '4 sekon',
+                    '5 sekon',
+                    '4,5 sekon'
+                ],
+                correctIndex: 0,
+                explanation: 'Gerak Jatuh Bebas (GJB): <i>h</i> = &frac12;<i>gt</i><sup>2</sup> &rArr; 45 = &frac12;(10)<i>t</i><sup>2</sup> &rArr; 5<i>t</i><sup>2</sup> = 45 &rArr; <i>t</i><sup>2</sup> = 9 &rArr; <i>t</i> = 3 sekon.'
+            },
+            {
+                id: 'MOTS-03',
+                level: 'MOTS',
+                question: 'Sebuah batu dilempar vertikal ke atas dengan kecepatan awal 20 m/s dari permukaan tanah (<i>g</i> = 10 m/s<sup>2</sup>). Tinggi maksimum yang dicapai batu tersebut dari tanah adalah ....',
+                options: [
+                    '20 meter',
+                    '10 meter',
+                    '15 meter',
+                    '25 meter',
+                    '40 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Gerak Vertikal ke Atas (GVA) di titik tertinggi (<i>v</i><sub>t</sub> = 0): <i>h</i><sub>maks</sub> = (<i>v</i><sub>0</sub><sup>2</sup>) / (2<i>g</i>) = (20<sup>2</sup>) / (2 &times; 10) = 400 / 20 = 20 meter.'
+            },
+            {
+                id: 'MOTS-04',
+                level: 'MOTS',
+                question: 'Grafik kecepatan terhadap waktu (<i>v</i>-<i>t</i>) suatu benda yang bergerak lurus menunjukkan garis lurus miring ke atas dari kecepatan 4 m/s menjadi 16 m/s dalam waktu 4 sekon. Percepatan benda tersebut adalah ....',
+                options: [
+                    '3 m/s<sup>2</sup>',
+                    '2 m/s<sup>2</sup>',
+                    '4 m/s<sup>2</sup>',
+                    '5 m/s<sup>2</sup>',
+                    '6 m/s<sup>2</sup>'
+                ],
+                correctIndex: 0,
+                explanation: 'Percepatan adalah gradien grafik <i>v</i>-<i>t</i>: <i>a</i> = (&Delta;<i>v</i>) / (&Delta;<i>t</i>) = (16 &minus; 4) / 4 = 12 / 4 = 3 m/s<sup>2</sup>.'
+            },
+            {
+                id: 'MOTS-05',
+                level: 'MOTS',
+                question: 'Sebuah kereta api melaju dengan kelajuan 72 km/jam. Masinis kemudian mengerem kereta hingga berhenti dalam waktu 10 sekon. Jarak pengereman yang ditempuh kereta sejak direm hingga berhenti adalah ....',
+                options: [
+                    '100 meter',
+                    '50 meter',
+                    '200 meter',
+                    '72 meter',
+                    '360 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Konversi awal: <i>v</i><sub>0</sub> = 72 km/jam = 20 m/s. <i>v</i><sub>t</sub> = 0. <i>a</i> = (0 &minus; 20) / 10 = &minus;2 m/s<sup>2</sup>. Jarak <i>S</i> = <i>v</i><sub>0</sub><i>t</i> + &frac12;<i>at</i><sup>2</sup> = 20(10) + &frac12;(&minus;2)(10<sup>2</sup>) = 200 &minus; 100 = 100 meter.'
+            },
+            {
+                id: 'MOTS-06',
+                level: 'MOTS',
+                question: 'Posisi suatu benda yang bergerak lurus sepanjang sumbu-X dinyatakan oleh persamaan posisi <i>x</i>(<i>t</i>) = 2<i>t</i><sup>3</sup> &minus; 6<i>t</i><sup>2</sup> + 10 meter, dengan <i>t</i> dalam sekon. Kecepatan benda pada saat <i>t</i> = 3 sekon adalah ....',
+                options: [
+                    '18 m/s',
+                    '6 m/s',
+                    '12 m/s',
+                    '24 m/s',
+                    '36 m/s'
+                ],
+                correctIndex: 0,
+                explanation: 'Kecepatan adalah turunan pertama posisi: <i>v</i>(<i>t</i>) = <i>dx</i>/<i>dt</i> = 6<i>t</i><sup>2</sup> &minus; 12<i>t</i>. Saat <i>t</i> = 3 s, <i>v</i>(3) = 6(3<sup>2</sup>) &minus; 12(3) = 54 &minus; 36 = 18 m/s.'
+            },
+            {
+                id: 'MOTS-07',
+                level: 'MOTS',
+                question: 'Sebuah benda dilepaskan dari ketinggian tertentu. Berdasarkan konsep Gerak Jatuh Bebas (tanpa gesekan udara), pernyataan yang benar adalah ....',
+                options: [
+                    'Kecepatan benda berbanding lurus dengan waktu jatuh (<i>v</i> &sim; <i>t</i>)',
+                    'Kecepatan benda berbanding lurus dengan kuadrat waktu (<i>v</i> &sim; <i>t</i><sup>2</sup>)',
+                    'Jarak tempuh benda berbanding lurus dengan waktu (<i>S</i> &sim; <i>t</i>)',
+                    'Percepatan benda bertambah seiring bertambahnya kedalaman',
+                    'Kecepatan awal benda tidak nol tetapi sama dengan percepatan gravitasinya'
+                ],
+                correctIndex: 0,
+                explanation: 'Pada gerak jatuh bebas, <i>v</i> = <i>g&middot;t</i>, sehingga kecepatan benda berbanding lurus dengan waktu jatuh (<i>v</i> &sim; <i>t</i>).'
+            },
+            {
+                id: 'MOTS-08',
+                level: 'MOTS',
+                question: 'Dua buah mobil A dan B terpisah sejauh 300 meter bergerak saling mendekati pada lintasan lurus. Mobil A melaju dengan kecepatan konstan 20 m/s dan mobil B dengan kecepatan konstan 10 m/s secara bersamaan. Kedua mobil akan berpapasan setelah bergerak selama ....',
+                options: [
+                    '10 sekon',
+                    '15 sekon',
+                    '20 sekon',
+                    '30 sekon',
+                    '12 sekon'
+                ],
+                correctIndex: 0,
+                explanation: 'Waktu berpapasan: <i>t</i> = <i>S</i><sub>total</sub> / (<i>v</i><sub>A</sub> + <i>v</i><sub>B</sub>) = 300 / (20 + 10) = 300 / 30 = 10 sekon.'
+            },
+            {
+                id: 'MOTS-09',
+                level: 'MOTS',
+                question: 'Sebuah bola dilemparkan vertikal ke bawah dari atap gedung dengan kecepatan awal 5 m/s. Jika bola menyentuh tanah setelah 3 sekon (<i>g</i> = 10 m/s<sup>2</sup>), tinggi gedung tersebut adalah ....',
+                options: [
+                    '60 meter',
+                    '45 meter',
+                    '50 meter',
+                    '75 meter',
+                    '30 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Gerak Vertikal ke Bawah (GVB): <i>h</i> = <i>v</i><sub>0</sub><i>t</i> + &frac12;<i>gt</i><sup>2</sup> = 5(3) + &frac12;(10)(3<sup>2</sup>) = 15 + 45 = 60 meter.'
+            },
+            {
+                id: 'MOTS-10',
+                level: 'MOTS',
+                question: 'Sebuah sepeda motor bergerak lurus berubah beraturan dari keadaan diam hingga menempuh jarak 36 meter dalam waktu 6 sekon. Percepatan sepeda motor tersebut adalah ....',
+                options: [
+                    '2 m/s<sup>2</sup>',
+                    '1 m/s<sup>2</sup>',
+                    '3 m/s<sup>2</sup>',
+                    '4 m/s<sup>2</sup>',
+                    '6 m/s<sup>2</sup>'
+                ],
+                correctIndex: 0,
+                explanation: 'Dari <i>S</i> = &frac12;<i>at</i><sup>2</sup> maka 36 = &frac12;<i>a</i>(6<sup>2</sup>) &rArr; 36 = 18<i>a</i> &rArr; <i>a</i> = 2 m/s<sup>2</sup>.'
+            },
+
+            // ==================== 10 SOAL HOTS ====================
+            {
+                id: 'HOTS-01',
+                level: 'HOTS',
+                question: 'Sebuah mobil A yang mula-mula diam mulai bergerak dengan percepatan konstan 4 m/s<sup>2</sup>. Tepat 2 sekon kemudian, mobil B menyusul dari tempat yang sama dengan kecepatan konstan 16 m/s searah dengan mobil A. Mobil B akan menyusul mobil A pada jarak ....',
+                options: [
+                    '32 meter',
+                    '64 meter',
+                    '128 meter',
+                    '48 meter',
+                    '96 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Syarat susul: <i>S</i><sub>A</sub> = <i>S</i><sub>B</sub> &rArr; &frac12;(4)(<i>t</i><sub>A</sub>)<sup>2</sup> = 16<i>t</i><sub>B</sub> dengan <i>t</i><sub>A</sub> = <i>t</i><sub>B</sub> + 2. Melalui uji aljabar atau substitusi, mobil B menyusul pada jarak 32 meter.'
+            },
+            {
+                id: 'HOTS-02',
+                level: 'HOTS',
+                question: 'Sebuah batu dilempar vertikal ke atas dengan kecepatan awal 30 m/s dari tanah (<i>g</i> = 10 m/s<sup>2</sup>). Selang waktu total sejak batu dilempar hingga kembali tiba di permukaan tanah adalah ....',
+                options: [
+                    '6 sekon',
+                    '3 sekon',
+                    '4 sekon',
+                    '5 sekon',
+                    '8 sekon'
+                ],
+                correctIndex: 0,
+                explanation: 'Waktu naik <i>t</i> = <i>v</i><sub>0</sub>/<i>g</i> = 30/10 = 3 s. Waktu total di udara adalah dua kali waktu naik, yaitu 2 &times; 3 = 6 sekon.'
+            },
+            {
+                id: 'HOTS-03',
+                level: 'HOTS',
+                question: 'Berdasarkan grafik percepatan terhadap waktu (<i>a</i>-<i>t</i>), suatu benda bergerak dari keadaan diam dengan grafik berbentuk persegi panjang dengan tinggi <i>a</i> = 4 m/s<sup>2</sup> dari <i>t</i> = 0 hingga <i>t</i> = 5 sekon. Kecepatan benda pada akhir detik ke-5 adalah ....',
+                options: [
+                    '20 m/s',
+                    '10 m/s',
+                    '15 m/s',
+                    '25 m/s',
+                    '30 m/s'
+                ],
+                correctIndex: 0,
+                explanation: 'Perubahan kecepatan sama dengan luas di bawah kurva <i>a</i>-<i>t</i>: &Delta;<i>v</i> = 4 &times; 5 = 20 m/s.'
+            },
+            {
+                id: 'HOTS-04',
+                level: 'HOTS',
+                question: 'Sebuah lift bergerak ke atas dengan percepatan tetap 2 m/s<sup>2</sup>. Di dalam lift, seseorang menjatuhkan sebuah baut dari ketinggian 1,5 meter di lantai lift (<i>g</i> = 10 m/s<sup>2</sup>). Waktu yang diperlukan baut untuk mencapai lantai lift adalah ....',
+                options: [
+                    '0,5 sekon',
+                    '0,4 sekon',
+                    '0,6 sekon',
+                    '0,8 sekon',
+                    '1,0 sekon'
+                ],
+                correctIndex: 0,
+                explanation: 'Percepatan efektif relatif terhadap lift ke atas: <i>g</i><sub>efektif</sub> = <i>g</i> + <i>a</i> = 10 + 2 = 12 m/s<sup>2</sup>. <i>t</i> = &radic;(2<i>h</i>/<i>g</i><sub>efektif</sub>) = &radic;(3/12) = 0,5 sekon.'
+            },
+            {
+                id: 'HOTS-05',
+                level: 'HOTS',
+                question: 'Sebuah benda jatuh bebas dari ketinggian <i>h</i>. Pada detik terakhir gerakannya sebelum menyentuh tanah, benda tersebut menempuh jarak sebesar 35 meter. Jika <i>g</i> = 10 m/s<sup>2</sup>, ketinggian awal <i>h</i> adalah ....',
+                options: [
+                    '80 meter',
+                    '45 meter',
+                    '125 meter',
+                    '180 meter',
+                    '60 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Gunakan selisih jarak total dengan detik sebelumnya: &frac12;<i>gt</i><sup>2</sup> &minus; &frac12;<i>g</i>(<i>t</i> &minus; 1)<sup>2</sup> = 35 &rArr; <i>t</i> = 4 s. Ketinggian awal <i>h</i> = 5(4<sup>2</sup>) = 80 meter.'
+            },
+            {
+                id: 'HOTS-06',
+                level: 'HOTS',
+                question: 'Dua buah benda A dan B dijatuhkan dari atap sebuah gedung secara berurutan. Benda A dijatuhkan lebih dulu, dan 1 sekon kemudian benda B dijatuhkan dari tempat yang sama. Jika hambatan udara diabaikan (<i>g</i> = 10 m/s<sup>2</sup>), jarak antara kedua benda setelah benda B bergerak selama 2 sekon adalah ....',
+                options: [
+                    '25 meter',
+                    '15 meter',
+                    '20 meter',
+                    '30 meter',
+                    '35 meter'
+                ],
+                correctIndex: 0,
+                explanation: '<i>t</i><sub>A</sub> = 3 s &rArr; <i>h</i><sub>A</sub> = 45 m. <i>t</i><sub>B</sub> = 2 s &rArr; <i>h</i><sub>B</sub> = 20 m. Selisih jarak = 45 &minus; 20 = 25 meter.'
+            },
+            {
+                id: 'HOTS-07',
+                level: 'HOTS',
+                question: 'Sebuah partikel bergerak sepanjang garis lurus dengan persamaan percepatan <i>a</i>(<i>t</i>) = (6<i>t</i> &minus; 4) m/s<sup>2</sup>. Jika pada saat <i>t</i> = 0 posisi partikel di <i>x</i> = 0 dan kecepatan awalnya <i>v</i><sub>0</sub> = 2 m/s, maka posisi partikel pada saat <i>t</i> = 3 sekon adalah ....',
+                options: [
+                    '21 meter',
+                    '15 meter',
+                    '27 meter',
+                    '18 meter',
+                    '24 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Integralkan percepatan dua kali untuk mendapatkan posisi <i>x</i>(<i>t</i>) = <i>t</i><sup>3</sup> &minus; 2<i>t</i><sup>2</sup> + 2<i>t</i>. Pada <i>t</i> = 3 s, <i>x</i>(3) = 27 &minus; 18 + 6 = 21 meter.'
+            },
+            {
+                id: 'HOTS-08',
+                level: 'HOTS',
+                question: 'Sebuah bola dilemparkan vertikal ke atas dengan kecepatan awal <i>v</i><sub>0</sub>. Ketika mencapai ketinggian setengah dari tinggi maksimumnya (<i>h</i> = &frac12; <i>h</i><sub>maks</sub>), kecepatan bola tersebut saat menaik adalah ....',
+                options: [
+                    '&frac12; <i>v</i><sub>0</sub> &radic;2',
+                    '&frac12; <i>v</i><sub>0</sub>',
+                    '<i>v</i><sub>0</sub> &radic;2',
+                    '&frac14; <i>v</i><sub>0</sub>',
+                    '<i>v</i><sub>0</sub> / &radic;3'
+                ],
+                correctIndex: 0,
+                explanation: 'Dari <i>v</i><sub>t</sub><sup>2</sup> = <i>v</i><sub>0</sub><sup>2</sup> &minus; 2<i>gh</i>, masukkan <i>h</i> = <i>v</i><sub>0</sub><sup>2</sup>/(4<i>g</i>), didapatkan <i>v</i><sub>t</sub> = <i>v</i><sub>0</sub>/&radic;2 = &frac12;<i>v</i><sub>0</sub>&radic;2.'
+            },
+            {
+                id: 'HOTS-09',
+                level: 'HOTS',
+                question: 'Dua stasiun kereta A dan B terpisah sejauh 1.500 meter. Kereta cepat meluncur dari stasiun A dengan percepatan tetap 2 m/s<sup>2</sup> menuju stasiun B. Pada saat yang sama, kereta lokal berangkat dari stasiun B menuju A dengan kecepatan konstan 20 m/s. Jarak tempat kedua kereta berpapasan dihitung dari stasiun A adalah ....',
+                options: [
+                    '900 meter',
+                    '700 meter',
+                    '500 meter',
+                    '800 meter',
+                    '600 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Persamaan bertemu: &frac12;(2)<i>t</i><sup>2</sup> + 20<i>t</i> = 1.500 &rArr; <i>t</i> = 30 s. Jarak dari A: <i>S</i><sub>A</sub> = &frac12;(2)(30<sup>2</sup>) = 900 meter.'
+            },
+            {
+                id: 'HOTS-10',
+                level: 'HOTS',
+                question: 'Sebuah bola dijatuhkan dari ketinggian 20 meter di atas lantai keras. Setiap kali bola memantul ke atas, ketinggian pantulannya menjadi 0,5 kali dari ketinggian sebelumnya. Total jarak vertikal yang ditempuh bola sejak dijatuhkan hingga berhenti memantul adalah ....',
+                options: [
+                    '60 meter',
+                    '50 meter',
+                    '72 meter',
+                    '80 meter',
+                    '90 meter'
+                ],
+                correctIndex: 0,
+                explanation: 'Gunakan deret geometri pantulan: <i>S</i><sub>total</sub> = <i>H</i> &times; (1 + <i>e</i><sup>2</sup>)/(1 &minus; <i>e</i><sup>2</sup>) = 20 &times; (1 + 0,5)/(1 &minus; 0,5) = 60 meter.'
+            }
+        ];
+
+        let examState = {
+            isRunning: false,
+            student: { name: '', className: '', absen: '' },
+            questions: [],
+            currentIndex: 0,
+            answers: {},
+            doubts: {},
+            timeRemaining: EXAM_DURATION_SECONDS,
+            timerInterval: null
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkBlacklistStatus();
+            setupGlobalSecurityListeners();
+        });
+
+        function checkBlacklistStatus() {
+            try {
+                const raw = localStorage.getItem(STORAGE_BLACKLIST_KEY);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    if (data && data.isBlacklisted) {
+                        showBlacklistScreen(data);
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.error('Gagal membaca storage:', e);
+            }
+            return false;
+        }
+
+        function showBlacklistScreen(data) {
+            examState.isRunning = false;
+            if (examState.timerInterval) clearInterval(examState.timerInterval);
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('submit-modal').classList.add('hidden');
+
+            document.getElementById('bl-nama').textContent = data.name || 'Tidak Diketahui';
+            document.getElementById('bl-kelas').textContent = `${data.className || '-'} / Absen ${data.absen || '-'}`;
+            document.getElementById('bl-reason').textContent = data.reason || 'Pelanggaran Aturan Ujian';
+            document.getElementById('bl-time').textContent = data.timestamp || new Date().toLocaleString('id-ID');
+
+            document.getElementById('blacklist-screen').classList.remove('hidden');
+        }
+
+        function triggerAutoBlacklist(reason) {
+            if (!examState.isRunning) return;
+
+            examState.isRunning = false;
+            if (examState.timerInterval) clearInterval(examState.timerInterval);
+
+            const blacklistRecord = {
+                isBlacklisted: true,
+                name: examState.student.name,
+                className: examState.student.className,
+                absen: examState.student.absen,
+                reason: reason,
+                timestamp: new Date().toLocaleString('id-ID', {
+                    dateStyle: 'medium',
+                    timeStyle: 'medium'
+                })
+            };
+
+            try {
+                localStorage.setItem(STORAGE_BLACKLIST_KEY, JSON.stringify(blacklistRecord));
+            } catch (e) {
+                console.error('Gagal menyimpan blacklist:', e);
+            }
+
+            showBlacklistScreen(blacklistRecord);
+        }
+
+        function openTeacherModal() {
+            document.getElementById('teacher-pin-input').value = '';
+            document.getElementById('pin-error-msg').classList.add('hidden');
+            document.getElementById('teacher-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('teacher-pin-input').focus(), 100);
+        }
+
+        function closeTeacherModal() {
+            document.getElementById('teacher-modal').classList.add('hidden');
+        }
+
+        function verifyTeacherPin() {
+            const inputPin = document.getElementById('teacher-pin-input').value.trim();
+            if (inputPin === TEACHER_PIN) {
+                localStorage.removeItem(STORAGE_BLACKLIST_KEY);
+                closeTeacherModal();
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+                location.reload();
+            } else {
+                document.getElementById('pin-error-msg').classList.remove('hidden');
+            }
+        }
+
+        function setupGlobalSecurityListeners() {
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+
+            ['copy', 'cut', 'paste'].forEach(evt => {
+                document.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                });
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!document.getElementById('teacher-modal').classList.contains('hidden')) {
+                    if (e.key === 'Enter') verifyTeacherPin();
+                    return;
+                }
+
+                if (
+                    e.key === 'F12' ||
+                    e.key === 'PrintScreen' ||
+                    (e.ctrlKey && ['c', 'v', 'x', 'u', 's', 'p', 'a', 'i', 'j'].includes(e.key.toLowerCase())) ||
+                    (e.metaKey && ['c', 'v', 'x', 'u', 's', 'p', 'a'].includes(e.key.toLowerCase())) ||
+                    (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()))
+                ) {
+                    e.preventDefault();
+                    if (examState.isRunning) {
+                        triggerAutoBlacklist(`Menekan tombol terlarang (${e.key})`);
+                    }
+                }
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (examState.isRunning && document.hidden) {
+                    triggerAutoBlacklist('Meninggalkan tab ujian / meminimalkan browser');
+                }
+            });
+
+            window.addEventListener('blur', () => {
+                if (examState.isRunning) {
+                    triggerAutoBlacklist('Jendela ujian kehilangan fokus (beralih aplikasi/layar)');
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                if (examState.isRunning && !document.fullscreenElement) {
+                    triggerAutoBlacklist('Keluar dari mode Layar Penuh (Fullscreen)');
+                }
+            });
+            document.addEventListener('webkitfullscreenchange', () => {
+                if (examState.isRunning && !document.webkitFullscreenElement) {
+                    triggerAutoBlacklist('Keluar dari mode Layar Penuh (Fullscreen)');
+                }
+            });
+        }
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function prepareRandomizedQuestions() {
+            const shuffledQuestions = shuffleArray(QUESTION_BANK);
+            return shuffledQuestions.map((q) => {
+                const optionsWithFlag = q.options.map((optText, idx) => ({
+                    text: optText,
+                    isCorrect: idx === q.correctIndex
+                }));
+
+                const shuffledOptions = shuffleArray(optionsWithFlag);
+                const newCorrectIndex = shuffledOptions.findIndex(o => o.isCorrect);
+
+                return {
+                    ...q,
+                    shuffledOptions: shuffledOptions.map(o => o.text),
+                    shuffledCorrectIndex: newCorrectIndex
+                };
+            });
+        }
+
+        async function handleStartExam(e) {
+            e.preventDefault();
+
+            if (checkBlacklistStatus()) return;
+
+            const name = document.getElementById('student-name').value.trim();
+            const className = document.getElementById('student-class').value.trim();
+            const absen = document.getElementById('student-absen').value.trim();
+
+            if (!name || !className || !absen) return;
+
+            const elem = document.documentElement;
+            try {
+                if (elem.requestFullscreen) {
+                    await elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    await elem.webkitRequestFullscreen();
+                }
+            } catch (err) {
+                console.warn('Fullscreen request fallback:', err);
+            }
+
+            examState.student = { name, className, absen };
+            examState.questions = prepareRandomizedQuestions();
+            examState.currentIndex = 0;
+            examState.answers = {};
+            examState.doubts = {};
+            examState.timeRemaining = EXAM_DURATION_SECONDS;
+
+            document.getElementById('header-student-info').textContent = `${name} • ${className} (Absen ${absen})`;
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+
+            setTimeout(() => {
+                examState.isRunning = true;
+                startTimer();
+                renderNavGrid();
+                renderQuestion();
+            }, 600);
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            examState.timerInterval = setInterval(() => {
+                if (!examState.isRunning) return;
+
+                examState.timeRemaining--;
+                updateTimerDisplay();
+
+                if (examState.timeRemaining <= 0) {
+                    clearInterval(examState.timerInterval);
+                    finishExam(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(examState.timeRemaining / 60);
+            const secs = examState.timeRemaining % 60;
+            const display = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            const el = document.getElementById('timer-display');
+            el.textContent = display;
+
+            if (examState.timeRemaining <= 300) {
+                el.classList.remove('text-white');
+                el.classList.add('text-red-400', 'animate-pulse');
+            }
+        }
+
+        function renderQuestion() {
+            const idx = examState.currentIndex;
+            const q = examState.questions[idx];
+            const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+
+            document.getElementById('current-q-num').textContent = idx + 1;
+
+            const badge = document.getElementById('q-level-badge');
+            badge.textContent = q.level;
+            if (q.level === 'HOTS') {
+                badge.className = 'text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide bg-purple-100 text-purple-800 border border-purple-200';
+            } else {
+                badge.className = 'text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wide bg-sky-100 text-sky-800 border border-sky-200';
+            }
+
+            document.getElementById('question-text').innerHTML = q.question;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            const selectedOpt = examState.answers[idx];
+
+            q.shuffledOptions.forEach((optHtml, optIdx) => {
+                const isSelected = selectedOpt === optIdx;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => selectOption(optIdx);
+
+                btn.className = isSelected
+                    ? 'w-full text-left p-4 rounded-xl border-2 border-blue-600 bg-blue-50/80 flex items-start gap-3.5 transition shadow-sm'
+                    : 'w-full text-left p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-slate-50 flex items-start gap-3.5 transition';
+
+                const letterBadgeClass = isSelected
+                    ? 'w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 mt-0.5'
+                    : 'w-8 h-8 rounded-lg bg-slate-100 text-slate-700 font-bold text-sm flex items-center justify-center shrink-0 mt-0.5';
+
+                btn.innerHTML = `
+                    <span class="${letterBadgeClass}">${optionLetters[optIdx]}</span>
+                    <span class="text-sm sm:text-base text-slate-800 leading-relaxed pt-1">${optHtml}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('btn-prev').disabled = idx === 0;
+            
+            const nextBtn = document.getElementById('btn-next');
+            if (idx === examState.questions.length - 1) {
+                nextBtn.innerHTML = 'Selesai <i class="fa-solid fa-check"></i>';
+                nextBtn.onclick = openSubmitModal;
+                nextBtn.className = 'px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl shadow transition flex items-center gap-2';
+            } else {
+                nextBtn.innerHTML = 'Selanjutnya <i class="fa-solid fa-chevron-right"></i>';
+                nextBtn.onclick = nextQuestion;
+                nextBtn.className = 'px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold text-sm rounded-xl shadow transition flex items-center gap-2';
+            }
+
+            const isDoubt = !!examState.doubts[idx];
+            document.getElementById('doubt-btn-text').textContent = isDoubt ? 'Batal Ragu' : 'Ragu-ragu';
+
+            renderNavGrid();
+        }
+
+        function selectOption(optIdx) {
+            examState.answers[examState.currentIndex] = optIdx;
+            updateAnsweredCount();
+            renderQuestion();
+        }
+
+        function toggleDoubt() {
+            const idx = examState.currentIndex;
+            examState.doubts[idx] = !examState.doubts[idx];
+            renderQuestion();
+        }
+
+        function prevQuestion() {
+            if (examState.currentIndex > 0) {
+                examState.currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (examState.currentIndex < examState.questions.length - 1) {
+                examState.currentIndex++;
+                renderQuestion();
+            }
+        }
+
+        function jumpToQuestion(index) {
+            examState.currentIndex = index;
+            renderQuestion();
+        }
+
+        function renderNavGrid() {
+            const grid = document.getElementById('nav-grid');
+            grid.innerHTML = '';
+
+            examState.questions.forEach((_, idx) => {
+                const isCurrent = idx === examState.currentIndex;
+                const isAnswered = examState.answers[idx] !== undefined;
+                const isDoubt = !!examState.doubts[idx];
+
+                let btnClass = 'h-10 rounded-lg font-bold text-xs sm:text-sm transition flex items-center justify-center ';
+
+                if (isDoubt) {
+                    btnClass += 'bg-amber-400 text-amber-950 border border-amber-500 ';
+                } else if (isAnswered) {
+                    btnClass += 'bg-blue-600 text-white border border-blue-700 ';
+                } else {
+                    btnClass += 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 ';
+                }
+
+                if (isCurrent) {
+                    btnClass += 'ring-2 ring-offset-1 ring-blue-800 scale-105 ';
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = btnClass;
+                btn.textContent = idx + 1;
+                btn.onclick = () => jumpToQuestion(idx);
+                grid.appendChild(btn);
+            });
+        }
+
+        function updateAnsweredCount() {
+            const count = Object.keys(examState.answers).length;
+            document.getElementById('answered-count').textContent = count;
+        }
+
+        function openSubmitModal() {
+            const answered = Object.keys(examState.answers).length;
+            const total = examState.questions.length;
+            const unanswered = total - answered;
+
+            const msg = unanswered > 0
+                ? `Anda baru menjawab <strong>${answered} dari ${total} soal</strong> (masih ada <strong>${unanswered} soal kosong</strong>). Apakah Anda yakin ingin mengakhiri ujian sekarang?`
+                : `Anda telah menjawab seluruh <strong>${total} soal</strong> dengan lengkap. Apakah Anda yakin ingin mengumpulkan jawaban sekarang?`;
+
+            document.getElementById('submit-summary-text').innerHTML = msg;
+            document.getElementById('submit-modal').classList.remove('hidden');
+        }
+
+        function closeSubmitModal() {
+            document.getElementById('submit-modal').classList.add('hidden');
+        }
+
+        function finishExam(isAutoTimeout) {
+            examState.isRunning = false;
+            if (examState.timerInterval) clearInterval(examState.timerInterval);
+
+            closeSubmitModal();
+
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+
+            let totalCorrect = 0;
+            let motsCorrect = 0;
+            let motsTotal = 0;
+            let hotsCorrect = 0;
+            let hotsTotal = 0;
+
+            examState.questions.forEach((q, idx) => {
+                const userAns = examState.answers[idx];
+                const isRight = userAns === q.shuffledCorrectIndex;
+
+                if (q.level === 'MOTS') {
+                    motsTotal++;
+                    if (isRight) motsCorrect++;
+                } else {
+                    hotsTotal++;
+                    if (isRight) hotsCorrect++;
+                }
+
+                if (isRight) totalCorrect++;
+            });
+
+            const score = Math.round((totalCorrect / examState.questions.length) * 100);
+            const motsAccuracy = motsTotal > 0 ? Math.round((motsCorrect / motsTotal) * 100) : 0;
+            const hotsAccuracy = hotsTotal > 0 ? Math.round((hotsCorrect / hotsTotal) * 100) : 0;
+
+            document.getElementById('exam-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            document.getElementById('res-name').textContent = examState.student.name;
+            document.getElementById('res-class').textContent = `Kelas ${examState.student.className} • Nomor Absen ${examState.student.absen}`;
+            document.getElementById('res-score').textContent = score;
+            document.getElementById('res-correct').textContent = `${totalCorrect} / 20`;
+            document.getElementById('res-wrong').textContent = `${20 - totalCorrect} / 20`;
+            document.getElementById('res-mots').textContent = `${motsAccuracy}% (${motsCorrect}/${motsTotal})`;
+            document.getElementById('res-hots').textContent = `${hotsAccuracy}% (${hotsCorrect}/${hotsTotal})`;
+
+            let predicate = 'Perlu Bimbingan';
+            if (score >= 90) predicate = 'Sangat Baik (Istimewa)';
+            else if (score >= 80) predicate = 'Baik (Tuntas)';
+            else if (score >= 75) predicate = 'Cukup (Tuntas KKM)';
+            document.getElementById('res-predicate').textContent = predicate;
+
+            renderReviewList();
+        }
+
+        function renderReviewList() {
+            const container = document.getElementById('review-container');
+            container.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+
+            examState.questions.forEach((q, idx) => {
+                const userAns = examState.answers[idx];
+                const correctIdx = q.shuffledCorrectIndex;
+                const isCorrect = userAns === correctIdx;
+
+                const statusBadge = isCorrect
+                    ? '<span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check"></i> Benar</span>'
+                    : '<span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md bg-rose-100 text-rose-800"><i class="fa-solid fa-xmark"></i> Salah / Kosong</span>';
+
+                const levelBadge = q.level === 'HOTS'
+                    ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">HOTS</span>'
+                    : '<span class="text-xs font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800">MOTS</span>';
+
+                const userAnsText = userAns !== undefined
+                    ? `<strong>${letters[userAns]}.</strong> ${q.shuffledOptions[userAns]}`
+                    : '<em class="text-slate-400">Tidak dijawab</em>';
+
+                const correctAnsText = `<strong>${letters[correctIdx]}.</strong> ${q.shuffledOptions[correctIdx]}`;
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl border ${isCorrect ? 'border-emerald-200' : 'border-rose-200'} p-5 sm:p-6 shadow-sm`;
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 text-sm">Soal No. ${idx + 1}</span>
+                            ${levelBadge}
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <p class="text-slate-800 text-sm sm:text-base leading-relaxed mb-4">${q.question}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm mb-4">
+                        <div class="p-3 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'}">
+                            <div class="font-semibold opacity-75 mb-0.5">Jawaban Anda:</div>
+                            <div>${userAnsText}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-950">
+                            <div class="font-semibold text-blue-700 mb-0.5">Kunci Jawaban Benar:</div>
+                            <div>${correctAnsText}</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                        <span class="font-bold text-slate-900"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> Pembahasan:</span> ${q.explanation}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
